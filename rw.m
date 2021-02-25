@@ -28,14 +28,22 @@ function rw(varargin)
 %   2013 Feb  5 Original
 %   2013 Feb  7 Added provision for 'cw' in varargin.
 %   2021 Feb  2 UK bands.
+%   2021 Feb  25 Metric option.
 
     bands_m = varargin{1};
-    if nargin > 1 && strcmp(varargin{2}, 'cw')
-        useCw = 1;
-    else
-        useCw = 0;
+    
+    useCw = 0;
+    distUnit = 'ft';
+    for i = 1:nargin
+        if strcmp(varargin{i}, 'cw')
+            useCw = 1;
+        end
+        
+        if strcmp(varargin{i}, 'metric')
+            distUnit = 'm';
+        end
     end
-
+    
     % Convert ham band names to min/max band edge frequency pairs.
     freqs_kHz = [];
     bands_m = sort(bands_m, 'descend');
@@ -65,32 +73,49 @@ function rw(varargin)
     end
     title(['End-fed Antenna High Impedance Lengths for ', ...
         mat2str(bands_m), bandStr]);
-    xlabel('Lengths to Avoid in Red (ft)');
+    xlabel(sprintf('Lengths to Avoid in Red (%s)', distUnit));
 
     % Plot length of zero feet through quarter wave, since antenna
     % must (should) be at least 1/4 wavelength long.
     fullWave_ft = 2 * 468 / lowest_MHz; % Max wavelength in band.
     qtrWave_ft = fullWave_ft / 4;    
+    
     qtrX = [0 0 qtrWave_ft qtrWave_ft];
+    if strcmp(distUnit, 'm')
+        qtrX = ft2m(qtrX);
+    end
     qtrY = [0 1 1          0];
     plotProps = area(qtrX, qtrY);
     set(plotProps, 'FaceColor', [1 0 0], 'EdgeColor', [1, 0, 0])
     
     % Draw a rectangle for difficult (high impedance) end fed wire lengths.
     for i = 1:size(freqs_kHz, 1)
-        badLengths(freqs_kHz(i, 1), freqs_kHz(i, 2), fullWave_ft)
+        badLengths(freqs_kHz(i, 1), freqs_kHz(i, 2), fullWave_ft, distUnit)
     end
     set(gca(), 'YTickLabel', '')
     
     % Adjust limits of x axis to multiples of 10 feet.
     shortestQtrWave = 234 / (freqs_kHz(1) * 1e-3);
     shortestQtrWave = 10 * floor(shortestQtrWave / 10);
-    xlim([shortestQtrWave, fullWave_ft]);
+    
+    if strcmp(distUnit, 'm')
+        xlim([ft2m(shortestQtrWave), ft2m(fullWave_ft)]);
+    else
+        xlim([shortestQtrWave, fullWave_ft]);
+    end
+    
     % Pick an even increment along x axis.
     inc = (fullWave_ft - shortestQtrWave) / size(bands_m, 2) / 1.5;
     inc = 10 * floor(inc / 10);
+    
     % Matlab default (2012b) uses too few tick marks, so add more.
-    set(gca(), 'Xtick', shortestQtrWave:inc:fullWave_ft);
+    xt = shortestQtrWave:inc:fullWave_ft;
+    if strcmp(distUnit, 'm')
+        xt = round(ft2m(xt));
+    end
+
+    set(gca(), 'Xtick', xt);
+    
     hold off
 end
 
@@ -157,7 +182,7 @@ function minMax = mapBandCw(band)
     end 
 end
 
-function badLengths(min_kHz, max_kHz, fullWave_ft)
+function badLengths(min_kHz, max_kHz, fullWave_ft, distUnit)
 % Plot a solid rectangle covering the frequency range half-wavelengths in
 % ft.
 
@@ -167,7 +192,11 @@ function badLengths(min_kHz, max_kHz, fullWave_ft)
         % indicating bad, or very high impedance, end-fed wire lengths.
         lambda0_ft = n * 468 / (max_kHz * 1e-3);
         lambda1_ft = n * 468 / (min_kHz * 1e-3);
+        
         badX = [lambda0_ft lambda0_ft lambda1_ft lambda1_ft];
+        if strcmp(distUnit, 'm')
+            badX = ft2m(badX);
+        end
         badY = [0          1          1          0];
         plotProps = area(badX, badY);
         set(plotProps, 'FaceColor', [1 0 0], 'EdgeColor', [1, 0, 0])
@@ -176,4 +205,8 @@ function badLengths(min_kHz, max_kHz, fullWave_ft)
             break
         end
     end
+end
+
+function m = ft2m(ft)
+    m = ft / 3.2808;
 end
