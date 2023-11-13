@@ -45,14 +45,13 @@ function rw(varargin)
     end
     
     % Convert ham band names to min/max band edge frequency pairs.
-    n = size(bands_m, 2);
-    freqs_kHz = zeros(n, 2);
+    freqs_kHz = zeros();
     bands_m = sort(bands_m, 'descend');
-    for i = 1:n
+    for i = 1:size(bands_m, 2)
         if useCw
-            freqs_kHz(i, :) = mapBandCw(bands_m(i));
+            freqs_kHz = [freqs_kHz; mapBandCw(bands_m(i))];
         else
-            freqs_kHz(i, :) = mapBand(bands_m(i));
+            freqs_kHz = [freqs_kHz; mapBand(bands_m(i))];
         end
     end
     lowest_MHz = freqs_kHz(1) * 1e-3;
@@ -67,13 +66,11 @@ function rw(varargin)
     scrHeight = screensize(4);
     set(figHandle, 'Position', ...
         [scrWidth/2 - 500, scrHeight/2, 150 * size(bands_m, 2), 100]);
-    
     if useCw
         bandStr = ' UK CW Sub-bands';
     else
         bandStr = ' UK Bands';
     end
-    
     title(['End-fed Antenna High Impedance Lengths for ', ...
         mat2str(bands_m), bandStr]);
     xlabel(sprintf('Lengths to Avoid in Red (%s)', distUnit));
@@ -87,9 +84,9 @@ function rw(varargin)
     if strcmp(distUnit, 'm')
         qtrX = ft2m(qtrX);
     end
-    
-    qtrY = [0 1 1 0];
-    set(area(qtrX, qtrY), 'FaceColor', [1 0 0], 'EdgeColor', [1, 0, 0])
+    qtrY = [0 1 1          0];
+    plotProps = area(qtrX, qtrY);
+    set(plotProps, 'FaceColor', [1 0 0], 'EdgeColor', [1, 0, 0])
     
     % Draw a rectangle for difficult (high impedance) end fed wire lengths.
     for i = 1:size(freqs_kHz, 1)
@@ -111,6 +108,14 @@ function rw(varargin)
     inc = (fullWave_ft - shortestQtrWave) / size(bands_m, 2) / 1.5;
     inc = 10 * floor(inc / 10);
     
+    % Matlab default (2012b) uses too few tick marks, so add more.
+    xt = shortestQtrWave:inc:fullWave_ft;
+    if strcmp(distUnit, 'm')
+        xt = round(ft2m(xt));
+    end
+
+    set(gca(), 'Xtick', xt);
+    
     hold off
 end
 
@@ -128,11 +133,10 @@ function badLengths(min_kHz, max_kHz, fullWave_ft, distUnit)
         if strcmp(distUnit, 'm')
             badX = ft2m(badX);
         end
-        
-        badY = [0 1 1 0];
-        set(area(badX, badY), 'FaceColor', [1 0 0], 'EdgeColor', [1, 0, 0])
+        badY = [0          1          1          0];
+        plotProps = area(badX, badY);
+        set(plotProps, 'FaceColor', [1 0 0], 'EdgeColor', [1, 0, 0])
         n = n + 1;
-        
         if lambda1_ft > fullWave_ft || n > 51
             break
         end
