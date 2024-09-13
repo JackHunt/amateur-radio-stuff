@@ -31,16 +31,16 @@ function rw(varargin)
 %   2021 Feb  25 Metric option.
 
     bands_m = varargin{1};
-    useCw = 0;
-    distUnit = 'ft';
+    use_cw = 0;
+    dist_unit = 'ft';
     
     for i = 1:nargin
         if strcmp(varargin{i}, 'cw')
-            useCw = 1;
+            use_cw = 1;
         end
         
         if strcmp(varargin{i}, 'metric')
-            distUnit = 'm';
+            dist_unit = 'm';
         end
     end
     
@@ -49,10 +49,10 @@ function rw(varargin)
     freqs_kHz = zeros(n, 2);
     bands_m = sort(bands_m, 'descend');
     for i = 1:n
-        if useCw
-            freqs_kHz(i, :) = mapBandCw(bands_m(i));
+        if use_cw
+            freqs_kHz(i, :) = map_band_cw(bands_m(i));
         else
-            freqs_kHz(i, :) = mapBand(bands_m(i));
+            freqs_kHz(i, :) = map_band(bands_m(i));
         end
     end
     lowest_MHz = freqs_kHz(1) * 1e-3;
@@ -61,60 +61,60 @@ function rw(varargin)
     clf
     hold on
     grid on
-    figHandle = figure(1);
+    fig_handle = figure(1);
     screensize = get( 0, 'ScreenSize' );
-    scrWidth = screensize(3);
-    scrHeight = screensize(4);
-    set(figHandle, 'Position', ...
-        [scrWidth/2 - 500, scrHeight/2, 150 * size(bands_m, 2), 100]);
+    scr_width = screensize(3);
+    scr_height = screensize(4);
+    set(fig_handle, 'Position', ...
+        [scr_width / 2 - 500, scr_height / 2, 150 * size(bands_m, 2), 100]);
     
-    if useCw
-        bandStr = ' UK CW Sub-bands';
+    if use_cw
+        band_str = ' UK CW Sub-bands';
     else
-        bandStr = ' UK Bands';
+        band_str = ' UK Bands';
     end
     
     title(['End-fed Antenna High Impedance Lengths for ', ...
-        mat2str(bands_m), bandStr]);
-    xlabel(sprintf('Lengths to Avoid in Red (%s)', distUnit));
+        mat2str(bands_m), band_str]);
+    xlabel(sprintf('Lengths to Avoid in Red (%s)', dist_unit));
 
     % Plot length of zero feet through quarter wave, since antenna
     % must (should) be at least 1/4 wavelength long.
-    fullWave_ft = 2 * 468 / lowest_MHz; % Max wavelength in band.
-    qtrWave_ft = fullWave_ft / 4;    
+    full_wave_ft = 2 * 468 / lowest_MHz; % Max wavelength in band.
+    qtr_wave_ft = full_wave_ft / 4;    
     
-    qtrX = [0 0 qtrWave_ft qtrWave_ft];
-    if strcmp(distUnit, 'm')
-        qtrX = ft2m(qtrX);
+    qtr_X = [0 0 qtr_wave_ft qtr_wave_ft];
+    if strcmp(dist_unit, 'm')
+        qtr_X = ft2m(qtr_X);
     end
     
-    qtrY = [0 1 1 0];
-    set(area(qtrX, qtrY), 'FaceColor', [1 0 0], 'EdgeColor', [1, 0, 0])
+    qtr_Y = [0 1 1 0];
+    set(area(qtr_X, qtr_Y), 'FaceColor', [1 0 0], 'EdgeColor', [1, 0, 0])
     
     % Draw a rectangle for difficult (high impedance) end fed wire lengths.
     for i = 1:size(freqs_kHz, 1)
-        badLengths(freqs_kHz(i, 1), freqs_kHz(i, 2), fullWave_ft, distUnit)
+        bad_lengths(freqs_kHz(i, 1), freqs_kHz(i, 2), full_wave_ft, dist_unit)
     end
     set(gca(), 'YTickLabel', '')
     
     % Adjust limits of x axis to multiples of 10 feet.
-    shortestQtrWave = 234 / (freqs_kHz(1) * 1e-3);
-    shortestQtrWave = 10 * floor(shortestQtrWave / 10);
+    shortest_qtr_wave = 234 / (freqs_kHz(1) * 1e-3);
+    shortest_qtr_wave = 10 * floor(shortest_qtr_wave / 10);
     
-    if strcmp(distUnit, 'm')
-        xlim([ft2m(shortestQtrWave), ft2m(fullWave_ft)]);
+    if strcmp(dist_unit, 'm')
+        xlim([ft2m(shortest_qtr_wave), ft2m(full_wave_ft)]);
     else
-        xlim([shortestQtrWave, fullWave_ft]);
+        xlim([shortest_qtr_wave, full_wave_ft]);
     end
     
     % Pick an even increment along x axis.
-    inc = (fullWave_ft - shortestQtrWave) / size(bands_m, 2) / 1.5;
+    inc = (full_wave_ft - shortest_qtr_wave) / size(bands_m, 2) / 1.5;
     inc = 10 * floor(inc / 10);
     
     hold off
 end
 
-function badLengths(min_kHz, max_kHz, fullWave_ft, distUnit)
+function bad_lengths(min_kHz, max_kHz, full_wave_ft, dist_unit)
 % Plot a solid rectangle covering the frequency range half-wavelengths in
 % ft.
     n = 1;
@@ -124,16 +124,16 @@ function badLengths(min_kHz, max_kHz, fullWave_ft, distUnit)
         lambda0_ft = n * 468 / (max_kHz * 1e-3);
         lambda1_ft = n * 468 / (min_kHz * 1e-3);
         
-        badX = [lambda0_ft lambda0_ft lambda1_ft lambda1_ft];
-        if strcmp(distUnit, 'm')
-            badX = ft2m(badX);
+        bad_X = [lambda0_ft lambda0_ft lambda1_ft lambda1_ft];
+        if strcmp(dist_unit, 'm')
+            bad_X = ft2m(bad_X);
         end
         
-        badY = [0 1 1 0];
-        set(area(badX, badY), 'FaceColor', [1 0 0], 'EdgeColor', [1, 0, 0])
+        bad_Y = [0 1 1 0];
+        set(area(bad_X, bad_Y), 'FaceColor', [1 0 0], 'EdgeColor', [1, 0, 0])
         n = n + 1;
         
-        if lambda1_ft > fullWave_ft || n > 51
+        if lambda1_ft > full_wave_ft || n > 51
             break
         end
     end
