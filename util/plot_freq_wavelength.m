@@ -11,6 +11,7 @@ function [f, lambda] = plot_freq_wavelength(f_min_mhz, f_max_mhz)
     grid on;
     yscale log;
     xscale log;
+    
     xlabel('Frequency (MHz)');
     ylabel('Wavelength (m)');
     
