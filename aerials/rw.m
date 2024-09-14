@@ -22,14 +22,13 @@ function rw(varargin)
 % Author
 %   Mike Markowski AB3AP
 %
-%   UK band modifications: Jack Hunt 2E0GDV
+%   UK band modifications: Jack Hunt M0JMU
 %
 % Date
 %   2013 Feb  5 Original
 %   2013 Feb  7 Added provision for 'cw' in varargin.
 %   2021 Feb  2 UK bands.
 %   2021 Feb  25 Metric option.
-
     bands_m = varargin{1};
     use_cw = 0;
     dist_unit = 'ft';
